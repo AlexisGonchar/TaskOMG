@@ -19,13 +19,15 @@ public class LevelControl : MonoBehaviour {
 	void Awake () {
 		//Матрица уровня.
 		int[,] lvl = LevelParser.LoadLevel(LvlIndex);
+		//Вектор смещения.
 		VectorBias = watter.GetComponent<BoxCollider2D>().size;
+		//Граница экрана.
 		Vector2 screenEdge = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
-		print(screenEdge);
+		//Позиция первого блока.
 		InitialPosition = new Vector2();
 		InitialPosition.x = -screenEdge.x + ((screenEdge.x * 2) - (VectorBias.x * lvl.GetLength(1)))/2f + VectorBias.x/2f;
-		print(InitialPosition.x);
 		InitialPosition.y = -screenEdge.y + screenEdge.y*0.4f;
+		//Генерация блоков.
 		GenerateLevel(lvl);
 	}
 
@@ -60,8 +62,10 @@ public class LevelControl : MonoBehaviour {
 				{
 					//Создание блока на сцене.
 					block = Instantiate(obj, new Vector2(InitialPosition.x + x * VectorBias.x, InitialPosition.y + (lvl.GetLength(0) - 1 - y) * VectorBias.y), Quaternion.identity);
+					//Замена уровня слоя.
 					block.GetComponent<Renderer>().sortingOrder = layer;
-					//block.GetComponent<Animator>().Play(block.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).fullPathHash, 0, Random.Range(0f, 1f));
+					//Начало анимации со случайного кадра.
+					block.GetComponent<Animator>().Play(block.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).fullPathHash, 0, Random.Range(0f, 1f));
 					block.name = "Block" + name + (x + 1) + (lvl.GetLength(0) - y);
 					Tiles[x, lvl.GetLength(0) - 1 - y] = block;
 				}
