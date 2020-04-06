@@ -26,10 +26,14 @@ public class SwipeControl : MonoBehaviour {
 	Vector2 startPos;
 	float startTime;
 
-	void Update()
+	void FixedUpdate()
 	{
 		SwipeDirection = Swipe();
 		SwipeDirection = SwipeMouse();
+		if(SwipeDirection != Direction.None)
+		{
+			print(SwipeDirection.ToString());
+		}
 	}
 
 	//Свайп тачем.
