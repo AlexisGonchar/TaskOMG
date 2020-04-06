@@ -18,13 +18,7 @@ public class SwipeControl : MonoBehaviour {
 	//Направление свайпа.
 	public static Direction SwipeDirection;
 
-	//Максимальное время свайпа.
-	public const float MAX_SWIPE_TIME = 0.5f;
-	//Минимальное расстояние свайпа.
-	public const float MIN_SWIPE_DISTANCE = 0.17f;
-
 	Vector2 startPos;
-	float startTime;
 
 	void FixedUpdate()
 	{
@@ -45,7 +39,6 @@ public class SwipeControl : MonoBehaviour {
 			if (t.phase == TouchPhase.Began)
 			{
 				startPos = new Vector2(t.position.x / (float)Screen.width, t.position.y / (float)Screen.width);
-				startTime = Time.time;
 			}
 			if (t.phase == TouchPhase.Ended)
 			{
@@ -61,7 +54,6 @@ public class SwipeControl : MonoBehaviour {
 		if (Input.GetMouseButtonDown(0))
 		{
 			startPos = new Vector2(Input.mousePosition.x / (float)Screen.width, Input.mousePosition.y / (float)Screen.width);
-			startTime = Time.time;
 		}
 		if (Input.GetMouseButtonUp(0))
 		{
@@ -73,15 +65,9 @@ public class SwipeControl : MonoBehaviour {
 	//Определение направления свайпа.
 	Direction CalculateDirection(Vector2 touchPos)
 	{
-		if (Time.time - startTime > MAX_SWIPE_TIME) //Слишком долгий свайп.
-			return Direction.None;
-
 		Vector2 endPos = new Vector2(Input.mousePosition.x / (float)Screen.width, Input.mousePosition.y / (float)Screen.width);
 
 		Vector2 swipe = new Vector2(endPos.x - startPos.x, endPos.y - startPos.y);
-
-		if (swipe.magnitude < MIN_SWIPE_DISTANCE) //Слишком каороткий свайп.
-			return Direction.None;
 
 		if (Mathf.Abs(swipe.x) > Mathf.Abs(swipe.y))
 		{

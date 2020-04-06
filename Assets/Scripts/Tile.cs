@@ -37,13 +37,15 @@ public class Tile : MonoBehaviour {
 		if (isMove)
 		{
 			if (objNB != null)
-				objNB.transform.position = Vector3.MoveTowards(objNB.transform.position, targetPosNB, 0.2f);
-			transform.position = Vector3.MoveTowards(transform.position, targetPos, 0.2f);
+				objNB.transform.position = Vector3.MoveTowards(objNB.transform.position, targetPosNB, 0.3f);
+			transform.position = Vector3.MoveTowards(transform.position, targetPos, 0.3f);
 			//Определение завершения перемещения.
-			if (Vector3Compare(transform.position, targetPos, 0.05))
+			if (Vector3Compare(transform.position, targetPos, 0.01))
 			{
-				isMove = false;
-				MovingTile = false;
+				objNB = null;
+				isMove = FallCheck();
+				MovingTile = isMove;
+				LevelControl.IsCheckGroups = !MovingTile;
 			}
 		}
 		//Обработка свайпа по экрану.
@@ -57,6 +59,38 @@ public class Tile : MonoBehaviour {
 		}
 		//Онулирование данных.
 		mouseOn = false;
+	}
+
+	//Проверка на возможность падения.
+	bool FallCheck()
+	{
+		Vector2 currentPos;
+		int currentX, currentY;
+		GameObject[,] tiles = LevelControl.Tiles;
+		currentPos = GetCurrentPosition(tiles);
+		currentX = (int)currentPos.x;
+		currentY = (int)currentPos.y;
+		int lenX = tiles.GetLength(0);
+		int lenY = tiles.GetLength(1);
+
+		if (currentY != 0)
+		{
+			int i = currentY - 1;
+			//Идёт вниз, пока не встретит землю, либо другой блок.
+			while (i >= 0 && tiles[currentX, i] == null)
+			{
+				i--;
+			}
+			if (i != currentY - 1)
+			{
+				tiles[currentX, currentY] = null;
+				tiles[currentX, i + 1] = gameObject;
+				targetPos = new Vector3(transform.position.x, transform.position.y - (currentY - (i + 1)) * VectorBias.y);
+				renderer.sortingOrder -= (currentY - (i + 1)) * tiles.GetLength(0);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	//Сравнение векторов с заданной погрешностью.

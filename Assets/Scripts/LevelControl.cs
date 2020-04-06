@@ -15,8 +15,11 @@ public class LevelControl : MonoBehaviour {
 	public static GameObject[,] Tiles;
 	//Индекс текущего уровня.
 	public static int LvlIndex = 2;
+	//Начало проверки совпадений.
+	public static bool IsCheckGroups;
 
 	void Awake () {
+		IsCheckGroups = false;
 		//Матрица уровня.
 		int[,] lvl = LevelParser.LoadLevel(LvlIndex);
 		//Вектор смещения.
@@ -29,6 +32,154 @@ public class LevelControl : MonoBehaviour {
 		InitialPosition.y = -screenEdge.y + screenEdge.y*0.4f;
 		//Генерация блоков.
 		GenerateLevel(lvl);
+	}
+
+	void Update()
+	{
+		if(IsCheckGroups && !Tile.MovingTile)
+		{
+			int[,] tiles = CheckGroups();
+			DestroyTiles(tiles);
+			IsCheckGroups = false;
+		}
+	}
+
+	//Уничтожение блоков.
+	void DestroyTiles(int[,] tiles)
+	{
+		int lenX = Tiles.GetLength(0);
+		int lenY = Tiles.GetLength(1);
+		for (int y = 0; y < lenY; y++)
+		{
+			for (int x = 0; x < lenX; x++)
+			{
+				if (tiles[x, y] < 0)
+				{
+					Tiles[x, y].GetComponent<Animator>().SetBool("Destroy", true);
+				}
+			}
+		}
+	}
+
+	//Построение матрицы совпадений, все совпадения < 0, то есть отмечены противоположными знаками.
+	int[,] CheckGroups()
+	{
+		int[,] tiles = GenerateArrayTiles();
+		int lenX = Tiles.GetLength(0);
+		int lenY = Tiles.GetLength(1);
+		for (int x = 0; x < lenX; x++)
+		{
+			for (int y = 0; y < lenY; y++)
+			{
+				if (tiles[x, y] > 0)
+				{
+					int left = FindMatches(tiles, x, y, Direction.Left);
+					int right = FindMatches(tiles, x, y, Direction.Right);
+					int up = FindMatches(tiles, x, y, Direction.Up);
+					int down = FindMatches(tiles, x, y, Direction.Down);
+
+					//По горизонтали.
+					if ((left + right) > 1)
+					{
+						while (left > -1)
+						{
+							if (tiles[x - left, y] > 0)
+							{
+								tiles[x - left, y] = -tiles[x - left, y];
+							}
+							left--;
+						}
+						while (right > -1)
+						{
+							if (tiles[x + right, y] > 0)
+							{
+								tiles[x + right, y] = -tiles[x + right, y];
+							}
+							right--;
+						}
+
+					}
+					//По вертикали.
+					if ((up + down) > 1)
+					{
+						while (down > -1)
+						{
+							if (tiles[x, y - down] > 0)
+							{
+								tiles[x, y - down] = -tiles[x, y - down];
+							}
+							down--;
+						}
+						while (up > -1)
+						{
+							if (tiles[x, y + up] > 0)
+							{
+								tiles[x, y + up] = -tiles[x, y + up];
+							}
+							up--;
+						}
+					}
+				}
+			}
+		}
+		return tiles;
+	}
+
+	//Нахождение совпадений по направлению.
+	int FindMatches(int[,] tiles, int x, int y, Direction dir)
+	{
+		int count = 0;
+		int num = Mathf.Abs(tiles[x, y]);
+		Vector2 vec = new Vector2(0, 0);
+		switch (dir)
+		{
+			case Direction.Left:
+				if (x > 0)
+					vec.x -= 1;
+				break;
+			case Direction.Right:
+				if (x < tiles.GetLength(0) - 1)
+					vec.x += 1;
+				break;
+			case Direction.Up:
+				if (y < tiles.GetLength(1) - 1)
+					vec.y += 1;
+				break;
+			case Direction.Down:
+				if (y > 0)
+					vec.y -= 1;
+				break;
+		}
+		if ((int)vec.x != 0 || (int)vec.y != 0)
+		{
+			if (Mathf.Abs(tiles[x + (int)vec.x, y + (int)vec.y]) == num)
+			{
+				count++;
+				count += FindMatches(tiles, x + (int)vec.x, y + (int)vec.y, dir);
+			}
+		}
+		return count;
+	}
+
+	//Генерация матрицы текущего состояния поля.
+	int[,] GenerateArrayTiles()
+	{
+		int lenX = Tiles.GetLength(0);
+		int lenY = Tiles.GetLength(1);
+		int[,] tiles = new int[lenX, lenY];
+		for (int x = 0; x < lenX; x++)
+		{
+			for (int y = 0; y < lenY; y++)
+			{
+				if (Tiles[x, y] == null)
+					tiles[x, y] = 0;
+				else if (Tiles[x, y].name.Contains("Watter"))
+					tiles[x, y] = 1;
+				else if (Tiles[x, y].name.Contains("Fire"))
+					tiles[x, y] = 2;
+			}
+		}
+		return tiles;
 	}
 
 	//Генерация блоков на сцене.
