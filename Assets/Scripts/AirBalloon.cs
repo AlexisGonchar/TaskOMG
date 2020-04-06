@@ -23,7 +23,7 @@ public class AirBalloon : MonoBehaviour
 
 	void Update()
 	{
-		float edge = AirBalloonGenerate.screenEdge.x;
+		float edge = AirBalloonGenerate.ScreenEdge.x;
 		//Уничтожение воздушного шара после прохождения сцены.
 		if (pos.x > edge || pos.x < -edge)
 		{

@@ -11,14 +11,14 @@ public class AirBalloonGenerate : MonoBehaviour
 	//Количество воздушных шаров на сцене.
 	public static int balloonCount;
 	//Правый верхний край экрана.
-	public static Vector2 screenEdge;
+	public static Vector2 ScreenEdge;
 
 	void Start()
 	{
 		//Вычисление края экрана.
-		screenEdge = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
-		screenEdge.x += AirBalloon1.GetComponent<BoxCollider2D>().size.x / 2f;
-		screenEdge.y -= AirBalloon1.GetComponent<BoxCollider2D>().size.y;
+		ScreenEdge = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
+		ScreenEdge.x += AirBalloon1.GetComponent<BoxCollider2D>().size.x / 2f;
+		ScreenEdge.y -= AirBalloon1.GetComponent<BoxCollider2D>().size.y;
 		//Инициализация.
 		balloonCount = 0;
 	}
@@ -40,9 +40,9 @@ public class AirBalloonGenerate : MonoBehaviour
 		//Определение вида воздушного гара случайным образом.
 		obj = Random.Range(0, 2) > 0 ? AirBalloon1 : AirBalloon2;
 		//Определение стороны генерации воздушного шара на сцене случайным образом.
-		float x = Random.Range(0, 2) > 0 ? screenEdge.x : -screenEdge.x;
+		float x = Random.Range(0, 2) > 0 ? ScreenEdge.x : -ScreenEdge.x;
 		//Определение высоты генерации воздушного шара случайным образом.
-		float y = Random.Range(screenEdge.y , (-screenEdge.y + screenEdge.y * 0.5f));
+		float y = Random.Range(ScreenEdge.y , (-ScreenEdge.y + ScreenEdge.y * 0.5f));
 		//Создание объекта.
 		Instantiate(obj, new Vector2(x, y), Quaternion.identity);
 	}
