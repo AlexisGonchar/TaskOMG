@@ -13,11 +13,13 @@ public class Tile : MonoBehaviour {
 	//Нажатие на объект.
 	private bool mouseOn;
 	//Значение, которое указывает идёт ли процесс перемещения объекта.
-	private bool isMove;
+	[System.NonSerialized]
+	public bool IsMove;
 	//Соседний блок с текущим, с которым будет происходить смена позициями.
 	private GameObject objNB;
 	//Позиция, на которую текущий объект должен переместиться. 
-	private Vector2 targetPos;
+	[System.NonSerialized]
+	public Vector2 targetPos;
 	//Позиция, на которую блок-сосед должен переместиться.
 	private Vector2 targetPosNB;
 	//Компонент Renderer текущего объекта.
@@ -29,31 +31,35 @@ public class Tile : MonoBehaviour {
 		renderer = GetComponent<Renderer>();
 		MovingTile = false;
 		mouseOn = false;
-		isMove = false;
+		IsMove = false;
 		objNB = null;		
 	}
 	
 	void Update () {
-		if (isMove)
+		if (IsMove)
 		{
 			if (objNB != null)
-				objNB.transform.position = Vector3.MoveTowards(objNB.transform.position, targetPosNB, 0.3f);
-			transform.position = Vector3.MoveTowards(transform.position, targetPos, 0.3f);
+				objNB.transform.position = Vector3.MoveTowards(objNB.transform.position, targetPosNB, 0.2f);
+			transform.position = Vector3.MoveTowards(transform.position, targetPos, 0.2f);
 			//Определение завершения перемещения.
 			if (Vector3Compare(transform.position, targetPos, 0.01))
 			{
 				objNB = null;
-				isMove = FallCheck();
-				MovingTile = isMove;
+				IsMove = FallCheck();
+				MovingTile = IsMove;
 				LevelControl.IsCheckGroups = !MovingTile;
+			}
+			else
+			{
+				MovingTile = true;
 			}
 		}
 		//Обработка свайпа по экрану.
-		if (mouseOn && SwipeControl.SwipeDirection != Direction.None && !MovingTile)
+		if (mouseOn && SwipeControl.SwipeDirection != Direction.None && !MovingTile && !LevelControl.IsDestruction)
 		{
 			if (SwapTiles())
 			{
-				isMove = true;
+				IsMove = true;
 				MovingTile = true;
 			}
 		}
@@ -62,7 +68,7 @@ public class Tile : MonoBehaviour {
 	}
 
 	//Проверка на возможность падения.
-	bool FallCheck()
+	public bool FallCheck()
 	{
 		Vector2 currentPos;
 		int currentX, currentY;
@@ -206,5 +212,19 @@ public class Tile : MonoBehaviour {
 	void OnMouseUp()
 	{
 		mouseOn = true;
+	}
+
+	//Триггер, который срабатывает после завершения анимации destroy.
+	void Die()
+	{
+		LevelControl.CountForDestroy--;
+		if (LevelControl.CountForDestroy == 0)
+		{
+			LevelControl.IsDestruction = false;
+			LevelControl.BeginGlobalFallCheck = true;
+		}
+		Vector2 curPos = GetCurrentPosition(LevelControl.Tiles);
+		LevelControl.Tiles[(int)curPos.x, (int)curPos.y] = null;
+		Destroy(gameObject);
 	}
 }

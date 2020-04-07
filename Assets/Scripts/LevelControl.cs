@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class LevelControl : MonoBehaviour {
 
+	//Количество уровней.
+	private readonly int COUNT_OF_LVL = 3;
 	//Игровые объекты блоков.
 	public GameObject watter;
 	public GameObject fire;
@@ -14,11 +16,22 @@ public class LevelControl : MonoBehaviour {
 	//Двумерная матрица обЪектов, где элемент[0,0] - левый нижний край. 
 	public static GameObject[,] Tiles;
 	//Индекс текущего уровня.
-	public static int LvlIndex = 2;
+	public static int LvlIndex = 1;
 	//Начало проверки совпадений.
 	public static bool IsCheckGroups;
+	//Во время уничтожения блоков находится в состоянии true.
+	public static bool IsDestruction;
+	//После уничтожения блоков находится в состоянии true.
+	public static bool BeginGlobalFallCheck;
+	//Количество блоков, которые нужно уничтожить.
+	public static int CountForDestroy;
+	//Длина матрицы в двух измерениях.
+	private int lenX, lenY;
 
 	void Awake () {
+		//Инициалиазация.
+		BeginGlobalFallCheck = false;
+		IsDestruction = false;
 		IsCheckGroups = false;
 		//Матрица уровня.
 		int[,] lvl = LevelParser.LoadLevel(LvlIndex);
@@ -32,23 +45,86 @@ public class LevelControl : MonoBehaviour {
 		InitialPosition.y = -screenEdge.y + screenEdge.y*0.4f;
 		//Генерация блоков.
 		GenerateLevel(lvl);
+		//Задание длины матрицы.
+		lenX = Tiles.GetLength(0);
+		lenY = Tiles.GetLength(1);
 	}
 
-	void Update()
+	void LateUpdate()
 	{
 		if(IsCheckGroups && !Tile.MovingTile)
 		{
 			int[,] tiles = CheckGroups();
-			DestroyTiles(tiles);
+			CountForDestroy = DestroyTiles(tiles);
+			if (CountForDestroy > 0)
+			{
+				IsDestruction = true;
+			}
 			IsCheckGroups = false;
+		}
+		if (BeginGlobalFallCheck)
+		{
+			//При победе загрузка уровня.
+			if (CheckWin())
+			{
+				if (LvlIndex < COUNT_OF_LVL)
+					LvlIndex++;
+				else
+					LvlIndex = 1;
+				Application.LoadLevel("SwipeElements");
+			}
+			GlobalFallCheck();
+			BeginGlobalFallCheck = false;
 		}
 	}
 
-	//Уничтожение блоков.
-	void DestroyTiles(int[,] tiles)
+	//Проверка на падение после уничтожения всех блоков.
+	void GlobalFallCheck()
 	{
-		int lenX = Tiles.GetLength(0);
-		int lenY = Tiles.GetLength(1);
+		bool[] checkArray = new bool[lenX];
+		//Массив, в котором хранятся данные, есть ли в столбцах пропуски.
+		for(int i = 0; i < lenX; i++)
+		{
+			checkArray[i] = false;
+		}
+		for(int y = 0; y < lenY; y++)
+		{
+			for(int x = 0; x < lenX; x++)
+			{
+				if (Tiles[x, y] == null)
+					checkArray[x] = true;
+				//Проверяются только те блоки, в столбцах которых есть пропуски.
+				if (Tiles[x, y] != null && checkArray[x])
+				{
+					Tile tile = Tiles[x, y].GetComponent<Tile>();
+					if (tile.FallCheck())
+					{
+						tile.IsMove = true;
+						Tile.MovingTile = true;
+					}
+				}
+			}
+		}
+	}
+
+	//Провекрка на выигрыш.
+	bool CheckWin()
+	{
+		for (int y = 0; y < lenY; y++)
+		{
+			for (int x = 0; x < lenX; x++)
+			{
+				if (Tiles[x, y] != null)
+					return false;
+			}
+		}
+		return true;
+	}
+
+	//Уничтожение блоков.
+	int DestroyTiles(int[,] tiles)
+	{
+		int count = 0;
 		for (int y = 0; y < lenY; y++)
 		{
 			for (int x = 0; x < lenX; x++)
@@ -56,17 +132,17 @@ public class LevelControl : MonoBehaviour {
 				if (tiles[x, y] < 0)
 				{
 					Tiles[x, y].GetComponent<Animator>().SetBool("Destroy", true);
+					count++;
 				}
 			}
 		}
+		return count;
 	}
 
 	//Построение матрицы совпадений, все совпадения < 0, то есть отмечены противоположными знаками.
 	int[,] CheckGroups()
 	{
 		int[,] tiles = GenerateArrayTiles();
-		int lenX = Tiles.GetLength(0);
-		int lenY = Tiles.GetLength(1);
 		for (int x = 0; x < lenX; x++)
 		{
 			for (int y = 0; y < lenY; y++)
@@ -164,8 +240,6 @@ public class LevelControl : MonoBehaviour {
 	//Генерация матрицы текущего состояния поля.
 	int[,] GenerateArrayTiles()
 	{
-		int lenX = Tiles.GetLength(0);
-		int lenY = Tiles.GetLength(1);
 		int[,] tiles = new int[lenX, lenY];
 		for (int x = 0; x < lenX; x++)
 		{
