@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class LevelControl : MonoBehaviour {
 
-	//Количество уровней.
-	private readonly int COUNT_OF_LVL = 3;
 	//Игровые объекты блоков.
 	public GameObject watter;
 	public GameObject fire;
@@ -41,8 +39,9 @@ public class LevelControl : MonoBehaviour {
 		Vector2 screenEdge = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
 		//Позиция первого блока.
 		InitialPosition = new Vector2();
+		//Центрирование по горизонтали.
 		InitialPosition.x = -screenEdge.x + ((screenEdge.x * 2) - (VectorBias.x * lvl.GetLength(1)))/2f + VectorBias.x/2f;
-		InitialPosition.y = -screenEdge.y + screenEdge.y*0.4f;
+		InitialPosition.y = -screenEdge.y + screenEdge.y*0.45f;
 		//Генерация блоков.
 		GenerateLevel(lvl);
 		//Задание длины матрицы.
@@ -54,6 +53,7 @@ public class LevelControl : MonoBehaviour {
 	{
 		if(IsCheckGroups && !Tile.MovingTile)
 		{
+			print("Match!");
 			int[,] tiles = CheckGroups();
 			CountForDestroy = DestroyTiles(tiles);
 			if (CountForDestroy > 0)
@@ -67,11 +67,7 @@ public class LevelControl : MonoBehaviour {
 			//При победе загрузка уровня.
 			if (CheckWin())
 			{
-				if (LvlIndex < COUNT_OF_LVL)
-					LvlIndex++;
-				else
-					LvlIndex = 1;
-				Application.LoadLevel("SwipeElements");
+				NextLvl.SetNextLvl();
 			}
 			GlobalFallCheck();
 			BeginGlobalFallCheck = false;

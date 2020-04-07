@@ -48,6 +48,7 @@ public class Tile : MonoBehaviour {
 				IsMove = FallCheck();
 				MovingTile = IsMove;
 				LevelControl.IsCheckGroups = !MovingTile;
+				LevelControl.BeginGlobalFallCheck = true;
 			}
 			else
 			{
