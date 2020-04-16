@@ -9,7 +9,7 @@ public enum TilesType
     Fire
 }
 
-public class TilesResources
+public class TilesResources 
 {
     public static Dictionary<TilesType, GameObject> tileObjects;
 

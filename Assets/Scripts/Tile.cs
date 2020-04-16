@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 //Game block class.
 public class Tile : MonoBehaviour {
@@ -77,7 +75,7 @@ public class Tile : MonoBehaviour {
 		mouseOn = false;
 	}
 
-	//Проверка на возможность падения.
+	//Check for the possibility of a fall.
 	public bool FallCheck()
 	{
 		Vector2 currentPos;
@@ -92,7 +90,6 @@ public class Tile : MonoBehaviour {
 		if (currentY != 0)
 		{
 			int i = currentY - 1;
-			//Идёт вниз, пока не встретит землю, либо другой блок.
 			while (i >= 0 && tiles[currentX, i] == null)
 			{
 				i--;
@@ -109,7 +106,7 @@ public class Tile : MonoBehaviour {
 		return false;
 	}
 
-	//Сравнение векторов с заданной погрешностью.
+	//Comparison of vectors with a given error.
 	bool Vector3Compare(Vector3 v1, Vector3 v2, double tolerance)
 	{
 		if (Mathf.Abs(transform.position.x - targetPos.x) < tolerance &&
@@ -120,8 +117,8 @@ public class Tile : MonoBehaviour {
 		return false;
 	}
 
-	//Определение возможности смещение, просчёт целевых позиций сдвига.
-	//Возвращает true, если движение возможно, false, если движение невозможно.
+	// Determining the possibility of displacement, miscalculation of the target position of the shift.
+	// Returns true if motion is possible, false if motion is not possible.
 	bool SwapTiles()
 	{
 		Vector2 currentPos;
@@ -141,7 +138,6 @@ public class Tile : MonoBehaviour {
 					targetPos.x -= VectorBias.x;
 					layerSwap = -1;
 					objNB = tiles[currentX - 1, currentY];
-					//Перемещение объекта в матрице.
 					tiles[currentX - 1, currentY] = tileObject;
 					break;
 				case Direction.Right:
@@ -175,7 +171,7 @@ public class Tile : MonoBehaviour {
 		return false;
 	}
 
-	//Получение текущей позиции объекта на игровом поле.
+	//Getting the current position of the object on the playing field.
 	Vector2 GetCurrentPosition(Tile[,] tiles)
 	{
 		Vector2 currentPos = new Vector2();
@@ -197,15 +193,13 @@ public class Tile : MonoBehaviour {
 		return currentPos;
 	}
 
-	//Определение границ экрана (определение невозможности движения в данном направлении).
-	//Возвращает true, если двежение возможно, false, если движение невозможно.
+	//Determination of the boundaries of the screen.
+	//Returns true if movement is possible, false if movement is not possible.
 	bool CheckBorder(Tile[,] tiles, int currentX, int currentY)
 	{
 		int lenX = tiles.GetLength(0);
 		int lenY = tiles.GetLength(1);
-		//Данное направление.
 		Direction curDir = SwipeControl.SwipeDirection;
-		//Проверка границ экрана.
 		if ((curDir == Direction.Left && currentX == 0) ||
 			(curDir == Direction.Right && currentX == lenX - 1) ||
 			(curDir == Direction.Up && currentY == lenY - 1) ||
