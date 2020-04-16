@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//Класс для смены уровней.
+//Class for changing levels.
 public class NextLvl : MonoBehaviour
 {
-	//Количество уровней.
+	//The number of levels.
 	public static readonly int COUNT_OF_LVL = 3;
 
 	void OnMouseUp()

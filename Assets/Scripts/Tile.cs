@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-//Класс игрового блока.
+//Game block class.
 public class Tile : MonoBehaviour {
 
 	//Статическая переменная, которая указывает смещаются ли данный момент блоки.

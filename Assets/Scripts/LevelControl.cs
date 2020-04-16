@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class LevelControl : MonoBehaviour {
 
@@ -28,6 +26,7 @@ public class LevelControl : MonoBehaviour {
 
 	void Awake () {
 		//Инициалиазация.
+		PoolManager.Init(transform);
 		BeginGlobalFallCheck = false;
 		IsDestruction = false;
 		IsCheckGroups = false;
