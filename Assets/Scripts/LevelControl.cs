@@ -2,9 +2,6 @@
 
 public class LevelControl : MonoBehaviour {
 
-	//Игровые объекты блоков.
-	public GameObject watter;
-	public GameObject fire;
 	//Позиция первого блока (нижнего левого) на сцене.
 	public static Vector2 InitialPosition;
 	//Вектор смещения блоков относительно Осей X и Y.
@@ -26,10 +23,11 @@ public class LevelControl : MonoBehaviour {
 
 	void Awake () {
 		Init();
+		TilesResources.OpenTileFiles();
 		//Матрица уровня.
 		int[,] lvl = LevelParser.LoadLevel(LvlIndex);
 		//Вектор смещения.
-		VectorBias = watter.GetComponent<BoxCollider2D>().size;
+		VectorBias = TilesResources.tileObjects[TilesType.Water].GetComponent<BoxCollider2D>().size;
 		//Граница экрана.
 		Vector2 screenEdge = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
 		//Позиция первого блока.
@@ -265,30 +263,19 @@ public class LevelControl : MonoBehaviour {
 		GameObject block;
 		TilesType type = TilesType.None;
 		Tile tile;
-		string name = null;
-
+		
 		for (int y = lvl.GetLength(0) - 1; y >= 0; y--)
 		{
 			for (int x = 0; x < lvl.GetLength(1); x++)
 			{
-				obj = null;
-				if (lvl[y, x] == 1)
+				type = (TilesType)lvl[y, x];
+				
+				if (type != TilesType.None)
 				{
-					obj = watter;
-					type = TilesType.Water;
-					name = "Watter";
-				}
-				else if (lvl[y, x] == 2)
-				{
-					obj = fire;
-					type = TilesType.Fire;
-					name = "Fire";
-				}
-				if (obj != null)
-				{
+					obj = TilesResources.tileObjects[type];
 					//Creating a block on stage.
 					block = Instantiate(obj, new Vector2(InitialPosition.x + x * VectorBias.x, InitialPosition.y + (lvl.GetLength(0) - 1 - y) * VectorBias.y), Quaternion.identity);
-					block.name = "Block" + name + (x + 1) + (lvl.GetLength(0) - y);
+					block.name = "Block" + type.ToString() + (x + 1) + (lvl.GetLength(0) - y);
 					tile = block.GetComponent<Tile>();
 					tile.renderer = block.GetComponent<Renderer>();
 					tile.animator = block.GetComponent<Animator>();
