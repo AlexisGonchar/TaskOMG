@@ -5,6 +5,10 @@ using UnityEngine;
 //Game block class.
 public class Tile : MonoBehaviour {
 
+	[System.NonSerialized]
+	public TilesType type;
+	[System.NonSerialized]
+	public Animator animator;
 	//Статическая переменная, которая указывает смещаются ли данный момент блоки.
 	//(Блокировка лишних свайпов)
 	public static bool MovingTile;
@@ -16,19 +20,24 @@ public class Tile : MonoBehaviour {
 	[System.NonSerialized]
 	public bool IsMove;
 	//Соседний блок с текущим, с которым будет происходить смена позициями.
-	private GameObject objNB;
+	private Tile objNB;
 	//Позиция, на которую текущий объект должен переместиться. 
 	[System.NonSerialized]
 	public Vector2 targetPos;
 	//Позиция, на которую блок-сосед должен переместиться.
 	private Vector2 targetPosNB;
 	//Компонент Renderer текущего объекта.
-	private Renderer renderer;
+	[System.NonSerialized]
+	public Renderer renderer;
+	[System.NonSerialized]
+	public Tile tileObject;
 
 	void Start () {
 		//Инициализация переменных.
+		//tile = GetComponent<Tile>();
+		//animator = GetComponent<Animator>();
 		VectorBias = GetComponent<BoxCollider2D>().size;
-		renderer = GetComponent<Renderer>();
+		//renderer = GetComponent<Renderer>();
 		MovingTile = false;
 		mouseOn = false;
 		IsMove = false;
@@ -73,7 +82,7 @@ public class Tile : MonoBehaviour {
 	{
 		Vector2 currentPos;
 		int currentX, currentY;
-		GameObject[,] tiles = LevelControl.Tiles;
+		Tile[,] tiles = LevelControl.Tiles;
 		currentPos = GetCurrentPosition(tiles);
 		currentX = (int)currentPos.x;
 		currentY = (int)currentPos.y;
@@ -91,7 +100,7 @@ public class Tile : MonoBehaviour {
 			if (i != currentY - 1)
 			{
 				tiles[currentX, currentY] = null;
-				tiles[currentX, i + 1] = gameObject;
+				tiles[currentX, i + 1] = tileObject;
 				targetPos = new Vector3(transform.position.x, transform.position.y - (currentY - (i + 1)) * VectorBias.y);
 				renderer.sortingOrder -= (currentY - (i + 1)) * tiles.GetLength(0);
 				return true;
@@ -117,12 +126,11 @@ public class Tile : MonoBehaviour {
 	{
 		Vector2 currentPos;
 		int currentX, currentY;
-		GameObject[,] tiles = LevelControl.Tiles;
+		Tile[,] tiles = LevelControl.Tiles;
 		currentPos = GetCurrentPosition(tiles);
 		currentX = (int)currentPos.x;
 		currentY = (int)currentPos.y;
 		int lenX = tiles.GetLength(0);
-		int lenY = tiles.GetLength(1);
 		int layerSwap = 0;
 		if(CheckBorder(tiles, currentX, currentY))
 		{
@@ -134,25 +142,25 @@ public class Tile : MonoBehaviour {
 					layerSwap = -1;
 					objNB = tiles[currentX - 1, currentY];
 					//Перемещение объекта в матрице.
-					tiles[currentX - 1, currentY] = gameObject;
+					tiles[currentX - 1, currentY] = tileObject;
 					break;
 				case Direction.Right:
 					targetPos.x += VectorBias.x;
 					layerSwap = 1;
 					objNB = tiles[currentX + 1, currentY];
-					tiles[currentX + 1, currentY] = gameObject;
+					tiles[currentX + 1, currentY] = tileObject;
 					break;
 				case Direction.Up:
 					targetPos.y += VectorBias.y;
 					layerSwap = lenX;
 					objNB = tiles[currentX, currentY + 1];
-					tiles[currentX, currentY + 1] = gameObject;
+					tiles[currentX, currentY + 1] = tileObject;
 					break;
 				case Direction.Down:
 					targetPos.y -= VectorBias.y;
 					layerSwap = -lenX;
 					objNB = tiles[currentX, currentY - 1];
-					tiles[currentX, currentY - 1] = gameObject;
+					tiles[currentX, currentY - 1] = tileObject;
 					break;
 			}
 			if(objNB != null)
@@ -168,7 +176,7 @@ public class Tile : MonoBehaviour {
 	}
 
 	//Получение текущей позиции объекта на игровом поле.
-	Vector2 GetCurrentPosition(GameObject[,] tiles)
+	Vector2 GetCurrentPosition(Tile[,] tiles)
 	{
 		Vector2 currentPos = new Vector2();
 		int lenX = tiles.GetLength(0);
@@ -191,7 +199,7 @@ public class Tile : MonoBehaviour {
 
 	//Определение границ экрана (определение невозможности движения в данном направлении).
 	//Возвращает true, если двежение возможно, false, если движение невозможно.
-	bool CheckBorder(GameObject[,] tiles, int currentX, int currentY)
+	bool CheckBorder(Tile[,] tiles, int currentX, int currentY)
 	{
 		int lenX = tiles.GetLength(0);
 		int lenY = tiles.GetLength(1);
