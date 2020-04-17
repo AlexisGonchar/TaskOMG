@@ -12,7 +12,7 @@ public class LevelControl : MonoBehaviour {
 	public static int CountToDestroy;
 	//The number of blocks that should fall.
 	public static int CountToFall;
-	private static int lenX, lenY;
+	private int lenX, lenY;
 
 	void Awake () {
 		Init();
@@ -44,7 +44,6 @@ public class LevelControl : MonoBehaviour {
 		if (CountToFall == 0)
 		{
 			EventAggregator.Match.Publish();
-			Tile.MovingTile = false;
 		}
 	}
 
