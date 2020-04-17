@@ -1,24 +1,23 @@
 ﻿using UnityEngine;
 
+//Class for level control
 public class LevelControl : MonoBehaviour {
 
-	
-	//Двумерная матрица обЪектов, где элемент[0,0] - левый нижний край. 
+
+	//The two-dimensional matrix of objects, where the element [0,0] is the lower left edge.
 	public static Tile[,] Tiles;
-	//Индекс текущего уровня.
+	//Index of the current level.
 	public static int LvlIndex = 1;
-	//Начало проверки совпадений.
-	public static bool IsCheckGroups;
-	//Во время уничтожения блоков находится в состоянии true.
-	public static bool IsDestruction;
-	//После уничтожения блоков находится в состоянии true.
-	public static bool BeginGlobalFallCheck;
-	//Количество блоков, которые нужно уничтожить.
-	public static int CountForDestroy;
+	//The number of blocks to be destroyed.
+	public static int CountToDestroy;
+	//The number of blocks that should fall.
+	public static int CountToFall;
 	private static int lenX, lenY;
 
 	void Awake () {
 		Init();
+		EventAggregator.Fall.Subscribe(OnFallEvent);
+		EventAggregator.Match.Subscribe(OnMatchEvent);
 		TilesResources.OpenTileFiles();
 		Tiles = LevelGeneration.GenerateLevel(LvlIndex);
 		lenX = Tiles.GetLength(0);
@@ -28,39 +27,41 @@ public class LevelControl : MonoBehaviour {
 	//Initialization.
 	private void Init()
 	{
+		EventAggregator.Fall = new FallEvent();
+		EventAggregator.Match = new MatchEvent();
 		PoolManager.Init(transform);
-		BeginGlobalFallCheck = false;
-		IsDestruction = false;
-		IsCheckGroups = false;
+		CountToFall = 0;
 	}
 
-	void LateUpdate()
+	private void OnFallEvent()
 	{
-		if(IsCheckGroups && !Tile.MovingTile)
+		//If you win, load next level.
+		if (CheckWin())
 		{
-			int[,] tiles = TilesMatch.Check(Tiles);
-			CountForDestroy = DestroyTiles(tiles);
-			if (CountForDestroy > 0)
-			{
-				IsDestruction = true;
-			}
-			IsCheckGroups = false;
+			NextLvl.SetNextLvl();
 		}
-		if (BeginGlobalFallCheck)
+		CountToFall = GlobalFallCheck();
+		if (CountToFall == 0)
 		{
-			//If you win, load the level.
-			if (CheckWin())
-			{
-				NextLvl.SetNextLvl();
-			}
-			GlobalFallCheck();
-			BeginGlobalFallCheck = false;
+			EventAggregator.Match.Publish();
+			Tile.MovingTile = false;
+		}
+	}
+
+	private void OnMatchEvent()
+	{
+		int[,] tiles = TilesMatch.Check(Tiles);
+		CountToDestroy = DestroyTiles(tiles);
+		if(CountToDestroy == 0)
+		{
+			Tile.MovingTile = false;
 		}
 	}
 
 	//Drop check after destruction of all blocks.
-	void GlobalFallCheck()
+	int GlobalFallCheck()
 	{
+		int count = 0;
 		bool[] checkArray = new bool[lenX];
 		//An array in which data is stored, whether there are gaps in the columns.
 		for (int i = 0; i < lenX; i++)
@@ -76,15 +77,16 @@ public class LevelControl : MonoBehaviour {
 				//Only blocks with gaps in their columns are checked.
 				if (Tiles[x, y] != null && checkArray[x])
 				{
-					Tile tile = Tiles[x, y].GetComponent<Tile>();
+					Tile tile = Tiles[x, y];
 					if (tile.FallCheck())
 					{
-						tile.IsMove = true;
-						Tile.MovingTile = true;
+						tile.IsFall = true;
+						count++;
 					}
 				}
 			}
 		}
+		return count;
 	}
 
 	//Checking for a win.
@@ -111,11 +113,22 @@ public class LevelControl : MonoBehaviour {
 			{
 				if (tiles[x, y] < 0)
 				{
-					Tiles[x, y].GetComponent<Animator>().SetBool("Destroy", true);
+					Tiles[x, y].animator.SetBool("Destroy", true);
+					Tiles[x, y] = null;
 					count++;
 				}
 			}
 		}
 		return count;
+	}
+
+	public static bool CheckMove()
+	{
+		foreach(Tile tile in Tiles)
+		{
+			if (tile != null && tile.IsMove)
+				return true;
+		}
+		return false;
 	}
 }

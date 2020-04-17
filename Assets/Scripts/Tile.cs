@@ -7,63 +7,41 @@ public class Tile : MonoBehaviour {
 	public TilesType type;
 	[System.NonSerialized]
 	public Animator animator;
-	//Статическая переменная, которая указывает смещаются ли данный момент блоки.
-	//(Блокировка лишних свайпов)
-	public static bool MovingTile;
-	//Вектор смещения блоков относительно Осей X и Y.
+	//The displacement vector of the blocks relative to the X and Y axes.
 	private Vector2 VectorBias;
-	//Нажатие на объект.
+	// Static variable that indicates whether the blocks are currently moving.
+	// (Block extra swipe)
+	public static bool MovingTile;
 	private bool mouseOn;
-	//Значение, которое указывает идёт ли процесс перемещения объекта.
+	//A value that indicates whether the object is moving.
 	[System.NonSerialized]
 	public bool IsMove;
-	//Соседний блок с текущим, с которым будет происходить смена позициями.
+	[System.NonSerialized]
+	public bool IsFall;
 	private Tile objNB;
-	//Позиция, на которую текущий объект должен переместиться. 
 	[System.NonSerialized]
 	public Vector2 targetPos;
-	//Позиция, на которую блок-сосед должен переместиться.
 	private Vector2 targetPosNB;
-	//Компонент Renderer текущего объекта.
 	[System.NonSerialized]
 	public Renderer renderer;
-	[System.NonSerialized]
-	public Tile tileObject;
 
 	void Start () {
-		//Инициализация переменных.
-		//tile = GetComponent<Tile>();
-		//animator = GetComponent<Animator>();
+		//Initialization of variables.
 		VectorBias = GetComponent<BoxCollider2D>().size;
-		//renderer = GetComponent<Renderer>();
 		MovingTile = false;
 		mouseOn = false;
 		IsMove = false;
+		IsFall = false;
 		objNB = null;		
 	}
-	
+
 	void Update () {
-		if (IsMove)
+		if (IsMove || IsFall)
 		{
-			if (objNB != null)
-				objNB.transform.position = Vector3.MoveTowards(objNB.transform.position, targetPosNB, 0.2f);
-			transform.position = Vector3.MoveTowards(transform.position, targetPos, 0.2f);
-			//Определение завершения перемещения.
-			if (Vector3Compare(transform.position, targetPos, 0.01))
-			{
-				objNB = null;
-				IsMove = FallCheck();
-				MovingTile = IsMove;
-				LevelControl.IsCheckGroups = !MovingTile;
-				LevelControl.BeginGlobalFallCheck = true;
-			}
-			else
-			{
-				MovingTile = true;
-			}
+			MoveTile();
 		}
-		//Обработка свайпа по экрану.
-		if (mouseOn && SwipeControl.SwipeDirection != Direction.None && !MovingTile && !LevelControl.IsDestruction)
+		//Swipe processing on the screen.
+		if (mouseOn && SwipeControl.SwipeDirection != Direction.None && !MovingTile)
 		{
 			if (SwapTiles())
 			{
@@ -71,8 +49,33 @@ public class Tile : MonoBehaviour {
 				MovingTile = true;
 			}
 		}
-		//Онулирование данных.
 		mouseOn = false;
+	}
+
+	private void MoveTile()
+	{
+		if (objNB != null)
+			objNB.transform.position = Vector3.MoveTowards(objNB.transform.position, targetPosNB, 0.2f);
+		transform.position = Vector3.MoveTowards(transform.position, targetPos, 0.2f);
+		//Determination of the completion of the move.
+		if (Vector3Compare(transform.position, targetPos, 0.01))
+		{
+			objNB = null;
+
+			if (IsFall)
+			{
+				LevelControl.CountToFall--;
+				if (LevelControl.CountToFall == 0)
+					EventAggregator.Match.Publish();
+				IsFall = false;
+			}
+
+			if (IsMove)
+			{
+				EventAggregator.Fall.Publish();
+				IsMove = false;
+			}
+		}
 	}
 
 	//Check for the possibility of a fall.
@@ -97,7 +100,7 @@ public class Tile : MonoBehaviour {
 			if (i != currentY - 1)
 			{
 				tiles[currentX, currentY] = null;
-				tiles[currentX, i + 1] = tileObject;
+				tiles[currentX, i + 1] = this;
 				targetPos = new Vector3(transform.position.x, transform.position.y - (currentY - (i + 1)) * VectorBias.y);
 				renderer.sortingOrder -= (currentY - (i + 1)) * tiles.GetLength(0);
 				return true;
@@ -138,25 +141,25 @@ public class Tile : MonoBehaviour {
 					targetPos.x -= VectorBias.x;
 					layerSwap = -1;
 					objNB = tiles[currentX - 1, currentY];
-					tiles[currentX - 1, currentY] = tileObject;
+					tiles[currentX - 1, currentY] = this;
 					break;
 				case Direction.Right:
 					targetPos.x += VectorBias.x;
 					layerSwap = 1;
 					objNB = tiles[currentX + 1, currentY];
-					tiles[currentX + 1, currentY] = tileObject;
+					tiles[currentX + 1, currentY] = this;
 					break;
 				case Direction.Up:
 					targetPos.y += VectorBias.y;
 					layerSwap = lenX;
 					objNB = tiles[currentX, currentY + 1];
-					tiles[currentX, currentY + 1] = tileObject;
+					tiles[currentX, currentY + 1] = this;
 					break;
 				case Direction.Down:
 					targetPos.y -= VectorBias.y;
 					layerSwap = -lenX;
 					objNB = tiles[currentX, currentY - 1];
-					tiles[currentX, currentY - 1] = tileObject;
+					tiles[currentX, currentY - 1] = this;
 					break;
 			}
 			if(objNB != null)
@@ -211,23 +214,19 @@ public class Tile : MonoBehaviour {
 		return true;
 	}
 
-	//Триггер, который срабатывает после свайпа на определенном блоке.
 	void OnMouseUp()
 	{
 		mouseOn = true;
 	}
 
-	//Триггер, который срабатывает после завершения анимации destroy.
 	void Die()
 	{
-		LevelControl.CountForDestroy--;
-		if (LevelControl.CountForDestroy == 0)
+		LevelControl.CountToDestroy--;
+		if (LevelControl.CountToDestroy == 0)
 		{
-			LevelControl.IsDestruction = false;
-			LevelControl.BeginGlobalFallCheck = true;
+			EventAggregator.Fall.Publish();
 		}
-		Vector2 curPos = GetCurrentPosition(LevelControl.Tiles);
-		LevelControl.Tiles[(int)curPos.x, (int)curPos.y] = null;
+		
 		Destroy(gameObject);
 	}
 }

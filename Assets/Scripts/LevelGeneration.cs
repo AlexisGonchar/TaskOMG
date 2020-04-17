@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 public class LevelGeneration : MonoBehaviour
 {
-	//Позиция первого блока (нижнего левого) на сцене.
+	//The position of the first block (lower left) on the scene.
 	public static Vector2 InitialPosition;
-	//Вектор смещения блоков относительно Осей X и Y.
+	//The displacement vector of the blocks relative to the X and Y axes.
 	public static Vector2 VectorBias;
 
 	//Block generation on stage.
@@ -32,7 +32,6 @@ public class LevelGeneration : MonoBehaviour
 					tile = block.GetComponent<Tile>();
 					tile.renderer = block.GetComponent<Renderer>();
 					tile.animator = block.GetComponent<Animator>();
-					tile.tileObject = tile;
 					tile.type = type;
 					tile.renderer.sortingOrder = layer;
 					tile.animator.Play(block.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).fullPathHash, 0, Random.Range(0f, 1f));
@@ -44,17 +43,13 @@ public class LevelGeneration : MonoBehaviour
 		return tiles;
 	}
 
+	//Initialization of parameters.
 	private static int[,] Init(int index)
 	{
-		//Матрица уровня.
 		int[,] lvl = LevelParser.LoadLevel(index);
-		//Вектор смещения.
 		VectorBias = TilesResources.tileObjects[(TilesType)1].GetComponent<BoxCollider2D>().size;
-		//Граница экрана.
 		Vector2 screenEdge = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
-		//Позиция первого блока.
 		InitialPosition = new Vector2();
-		//Центрирование по горизонтали.
 		InitialPosition.x = -screenEdge.x + ((screenEdge.x * 2) - (VectorBias.x * lvl.GetLength(1))) / 2f + VectorBias.x / 2f;
 		InitialPosition.y = -screenEdge.y + screenEdge.y * 0.45f;
 
