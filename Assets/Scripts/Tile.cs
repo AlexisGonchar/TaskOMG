@@ -7,6 +7,8 @@ public class Tile : MonoBehaviour {
 	public TilesType type;
 	[System.NonSerialized]
 	public Animator animator;
+	[System.NonSerialized]
+	public Transform transform;
 	//The displacement vector of the blocks relative to the X and Y axes.
 	private Vector2 VectorBias;
 	// Static variable that indicates whether the blocks are currently moving.
@@ -28,6 +30,7 @@ public class Tile : MonoBehaviour {
 	void Start () {
 		//Initialization of variables.
 		VectorBias = GetComponent<BoxCollider2D>().size;
+		transform = gameObject.transform;
 		MovingTile = false;
 		mouseOn = false;
 		IsMove = false;
@@ -165,7 +168,7 @@ public class Tile : MonoBehaviour {
 			if(objNB != null)
 			{
 				targetPosNB = transform.position;
-				objNB.GetComponent<Renderer>().sortingOrder -= layerSwap;
+				objNB.renderer.sortingOrder -= layerSwap;
 			}
 			tiles[currentX, currentY] = objNB;
 			renderer.sortingOrder += layerSwap;

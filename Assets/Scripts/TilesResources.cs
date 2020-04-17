@@ -6,7 +6,7 @@ public enum TilesType
 {
     None,
     Water,
-    Fire
+    Fire, 
 }
 
 public class TilesResources 
